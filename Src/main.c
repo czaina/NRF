@@ -51,7 +51,13 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+extern unsigned char 	Buffer[];
+unsigned char 	RX_Buffer[]={
+0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,
+0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,
+0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,
+0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,7 +81,7 @@ static void MX_NVIC_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	unsigned char   key_debug;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -103,17 +109,49 @@ int main(void)
   /* Initialize interrupts */
   //MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
-	SPI_Read(NRF_READ_REG + CONFIG);
-	HAL_Delay(1);
-	SPI_Read(NRF_READ_REG + SETUP_AW);
-	HAL_Delay(1);
-	SPI_Read(NRF_READ_REG + RX_ADDR_P5);	
-  /* USER CODE END 2 */
+//	SPI_Read(NRF_READ_REG + CONFIG);
+//	HAL_Delay(1);
+//	SPI_Read(NRF_READ_REG + SETUP_AW);
+//	HAL_Delay(1);
+//	SPI_Read(NRF_READ_REG + RX_ADDR_P5);	
+  
+	
+	/* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	RX_Mode();
   while (1)
   {
+//		HAL_Delay(100);
+		if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) {         
+		 		Buffer[0]=80;
+				Buffer[1]=01;
+				TX_Mode();			// set TX Mode and transmitting
+//				HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+		} else {
+		 		Buffer[0]=80;
+				Buffer[1]=02;
+				TX_Mode();			// set TX Mode and transmitting
+			//				HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+		}
+		HAL_Delay(10);
+		RX_Mode();
+		HAL_Delay(100);
+		Buffer[0] = 0xFF;
+		Buffer[1] = 0xFF;
+		key_debug=SPI_Read(STATUS);			// read register STATUS's value
+		if(key_debug&RX_DR)					// if renRF24L01_CEive data ready (RX_DR) interrupt
+			SPI_Read_Buf(NRF_RD_RX_PLOAD,Buffer,TX_PLOAD_WIDTH);// read renRF24L01_CEive payload from RX_FIFO buffer
+		if(key_debug&MAX_RT) SPI_RW_Reg(FLUSH_TX,0);
+			SPI_RW_Reg(NRF_WRITE_REG+STATUS,0xff);// clear RX_DR or TX_DS or MAX_RT interrupt flag
+		
+		if(Buffer[0]==80)
+		{
+			if (Buffer[1]==01) HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+			if (Buffer[1]==02) HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+		} else
+			HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 
   /* USER CODE END WHILE */
 

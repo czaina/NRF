@@ -26,6 +26,9 @@
 #include "stm32l4xx_hal.h"
 #include "spi.h"
 #include "gpio.h"
+#define TX_ADR_WIDTH    5   // 5 bytes TX(RX) address width
+#define TX_PLOAD_WIDTH  16  // 16 bytes TX payload
+
 #define nRF24L01_CSNL HAL_GPIO_WritePin(NSS1_GPIO_Port, NSS1_Pin, GPIO_PIN_RESET);
 #define nRF24L01_CSNH HAL_GPIO_WritePin(NSS1_GPIO_Port, NSS1_Pin, GPIO_PIN_SET);
 #define nRF24L01_CEL HAL_GPIO_WritePin(CE1_GPIO_Port, CE1_Pin, GPIO_PIN_RESET);
